@@ -76,7 +76,7 @@ defmodule Mix.Tasks.Phoenix.Swagger.Generate do
         # check that give controller haev swagger_.* function and call it
         case function_exported?(controller, swagger_fun, 0) do
           true ->
-            {[description], parameters, response_code,
+            {[description], tag, parameters, response_code,
              response_description, meta} = apply(controller, swagger_fun, [])
             # convert list of parameters to maps
             parameters = get_parameters(parameters)
@@ -98,8 +98,12 @@ defmodule Mix.Tasks.Phoenix.Swagger.Generate do
               IO.puts "Warning: Double definition for #{route_map.verb} #{path}"
             end
 
-            path_map = (acc[path] || %{})
-                       |> Map.put(route_map.verb, Map.put(request_map, :responses, response))
+            request_map =
+              request_map
+              |> Map.put(:responses, response)
+              |> Map.put(:tags, tag)
+
+            path_map = (acc[path] || %{}) |> Map.put(route_map.verb, request_map)
 
             Map.put(acc, path, path_map)
           _ ->
@@ -177,7 +181,7 @@ defmodule Mix.Tasks.Phoenix.Swagger.Generate do
   defp get_api_routes(router_mod) do
     Enum.filter(router_mod.__routes__,
       fn(route_path) ->
-        route_path.pipe_through == [:api]
+        Enum.member?(route_path.pipe_through, :api)
       end)
   end
 

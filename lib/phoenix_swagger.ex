@@ -53,6 +53,7 @@ defmodule PhoenixSwagger do
   defmacro swagger_model(action, expr) do
     metadata = unblock(expr)
     description = Keyword.get(metadata, :description)
+    tag = Keyword.get(metadata, :tag)
     parameters = get_parameters(metadata)
     fun_name = ("swagger_" <> to_string(action)) |> String.to_atom
     [response_code, response_description | meta] = Keyword.get(metadata, :responses)
@@ -60,6 +61,7 @@ defmodule PhoenixSwagger do
     quote do
       def unquote(fun_name)() do
         {PhoenixSwagger.get_description(__MODULE__, unquote(description)),
+         unquote(tag),
          unquote(parameters),
          unquote(response_code),
          unquote(response_description),
